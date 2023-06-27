@@ -20,7 +20,7 @@ def add(x, y):
         Sum of x + y
     """
     ### BEGIN YOUR CODE
-    pass
+    return x + y
     ### END YOUR CODE
 
 
@@ -48,7 +48,14 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    pass
+    with gzip.open(image_filename, 'rb') as img_file:
+        magic, numbers, row, col = struct.unpack(">4I", img_file.read(16))
+        images = np.fromstring(img_file.read(), dtype=np.uint8).reshape(numbers, 784).astype('float32') / 255
+
+    with gzip.open(label_filename, 'rb') as lab_file:
+        magic, numbers = struct.unpack(">2I", lab_file.read(8))
+        labels = np.fromstring(lab_file.read(), dtype=np.uint8)
+    return (images, labels)
     ### END YOUR CODE
 
 
@@ -68,7 +75,7 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    return np.average(np.log(np.exp(Z).sum(1)) - np.choose(y, Z.T))
     ### END YOUR CODE
 
 
@@ -91,7 +98,15 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    for i in range(int(X.shape[0]/batch)):
+        batch_x = X[i*batch:(i+1)*batch]
+        batch_y = y[i*batch:(i+1)*batch]
+        h = np.exp(batch_x@theta)
+        Z = h/h.sum(1, keepdims=True)
+        I = np.eye(Z.shape[1])[batch_y]
+        I = I.astype(np.float32)
+        gradient = ((batch_x.T)@(Z-I))/batch
+        theta -= lr * gradient
     ### END YOUR CODE
 
 
@@ -118,7 +133,20 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    for i in range(int(X.shape[0]/batch)):
+        batch_x = X[i*batch:(i+1)*batch]
+        batch_y = y[i*batch:(i+1)*batch]
+        # ReLU = max(0, x)
+        Z = np.maximum(batch_x@W1, 0)
+        h = np.exp(Z@W2)
+        nor = h/h.sum(1, keepdims=True)
+        I = np.eye(nor.shape[1])[batch_y]
+        G2 = nor - I
+        G1 = np.where(Z > 0, 1, 0)*(G2@W2.T)
+        gradient_w1 = (batch_x.T@G1) / batch
+        gradient_w2 = (Z.T@G2) / batch
+        W1 -= lr * gradient_w1
+        W2 -= lr * gradient_w2
     ### END YOUR CODE
 
 
