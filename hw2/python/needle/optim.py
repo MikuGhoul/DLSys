@@ -25,7 +25,11 @@ class SGD(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        for param in self.params:
+            grad = self.momentum * self.u.get(param, 0) + (1 - self.momentum) * (param.grad.detach() + self.weight_decay * param.detach())
+            grad = ndl.Tensor(grad, dtype=param.dtype)
+            self.u[param] = grad
+            param.data -= self.lr * grad
         ### END YOUR SOLUTION
 
 
@@ -52,5 +56,13 @@ class Adam(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.t += 1
+        for param in self.params:
+            m = self.beta1 * self.m.get(param, 0) + (1 - self.beta1) * (param.grad.detach() + self.weight_decay * param.detach())
+            v = self.beta2 * self.v.get(param, 0) + (1 - self.beta2) * ((param.grad.detach() + self.weight_decay * param.detach()) ** 2)
+            m_bias = m / (1 - self.beta1 ** self.t)
+            v_bias = v / (1 - self.beta2 ** self.t)
+            self.m[param] = m
+            self.v[param] = v
+            param.data -= ndl.Tensor(self.lr * m_bias / (v_bias ** 0.5 + self.eps), dtype=param.dtype) 
         ### END YOUR SOLUTION

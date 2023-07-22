@@ -87,17 +87,21 @@ class Linear(Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.weight = init.kaiming_uniform(fan_in=in_features, fan_out=out_features)
+        ### BEGIN YOUR SOLUTION
+        self.weight = Parameter(init.kaiming_uniform(fan_in=in_features, fan_out=out_features))
         if bias:
-            self.bias = init.kaiming_uniform(fan_in=out_features, fan_out=1).reshape((1, out_features))
+            self.bias = Parameter(init.kaiming_uniform(fan_in=out_features, fan_out=1).reshape((1, out_features)))
         else:
             self.bias = None
+        ### END YOUR SOLUTION
 
     def forward(self, X: Tensor) -> Tensor:
+        ### BEGIN YOUR SOLUTION
         out = ops.matmul(X, self.weight)
         if self.bias is not None:
-            out = ops.add(out, self.bias)
+            out = ops.add(out, ops.broadcast_to(self.bias, out.shape))
         return out
+        ### END YOUR SOLUTION
 
 
 
@@ -129,7 +133,7 @@ class Sequential(Module):
 
 class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
-        y = init.one_hot(np.max(y.cached_data) + 1, y)
+        y = init.one_hot(logits.shape[1], y)
         return (ops.summation(ops.logsumexp(logits, (1, ))) - ops.summation((ops.multiply(y, logits)))) / logits.shape[0]
 
 
@@ -140,8 +144,8 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = init.ones(dim)
-        self.bias = init.zeros(dim)
+        self.weight = Parameter(init.ones(dim))
+        self.bias = Parameter(init.zeros(dim))
         self.running_mean = init.zeros(dim)
         self.running_var = init.ones(dim)
         ### END YOUR SOLUTION
@@ -149,6 +153,8 @@ class BatchNorm1d(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
+        weight_broadcast = ops.broadcast_to(ops.reshape(self.weight, (1, self.weight.shape[0])), x.shape)
+        bias_broadcast = ops.broadcast_to(ops.reshape(self.bias, (1, self.bias.shape[0])), x.shape)
         if self.training:
             mean_x = ops.divide_scalar(ops.summation(x, 0), x.shape[0])
             mean_x_reshap = ops.reshape(mean_x, (1, mean_x.shape[0]))
@@ -158,7 +164,7 @@ class BatchNorm1d(Module):
             var_x_broadcast = ops.broadcast_to(var_x_reshape, x.shape)
             self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean_x
             self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var_x
-            return ops.multiply(self.weight, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + self.bias
+            return ops.multiply(weight_broadcast, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + bias_broadcast
         else:
             mean_x = self.running_mean
             mean_x_reshap = ops.reshape(mean_x, (1, mean_x.shape[0]))
@@ -166,7 +172,7 @@ class BatchNorm1d(Module):
             var_x = self.running_var
             var_x_reshape = ops.reshape(var_x, (1, var_x.shape[0]))
             var_x_broadcast = ops.broadcast_to(var_x_reshape, x.shape)
-            return ops.multiply(self.weight, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + self.bias
+            return ops.multiply(weight_broadcast, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + bias_broadcast
         ### END YOUR SOLUTION
 
 
@@ -176,19 +182,21 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.weight = init.ones(dim)
-        self.bias = init.zeros(dim)
+        self.weight = Parameter(init.ones(dim))
+        self.bias = Parameter(init.zeros(dim))
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
+        weight_broadcast = ops.broadcast_to(ops.reshape(self.weight, (1, self.weight.shape[0])), x.shape)
+        bias_broadcast = ops.broadcast_to(ops.reshape(self.bias, (1, self.bias.shape[0])), x.shape)
         mean_x = ops.divide_scalar(ops.summation(x, 1), x.shape[1])
         mean_x_reshape = ops.reshape(mean_x, (mean_x.shape[0], 1))
         mean_x_broadcast = ops.broadcast_to(mean_x_reshape, x.shape)
         var_x = ops.divide_scalar(ops.summation(ops.power_scalar((x - mean_x_broadcast), 2), 1), x.shape[1])
         var_x_reshap = ops.reshape(var_x, (var_x.shape[0], 1))
         var_x_broadcast = ops.broadcast_to(var_x_reshap, x.shape)
-        return ops.multiply(self.weight, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + self.bias
+        return ops.multiply(weight_broadcast, (x - mean_x_broadcast) / ops.power_scalar(var_x_broadcast + self.eps, 0.5)) + bias_broadcast
         ### END YOUR SOLUTION
 
 

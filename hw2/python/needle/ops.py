@@ -233,7 +233,9 @@ class BroadcastTo(TensorOp):
             else:
                 axes = list(range(len(out_grad.shape) - len(lhs.shape) + 1))
         axes = tuple(axes)
-        return reshape(summation(out_grad, axes), lhs.shape)
+        # return reshape(summation(out_grad, axes), lhs.shape)
+        ## TODO: use .detach() for test_optim_adam_z_memory_check_1
+        return reshape(summation(out_grad, axes), lhs.shape).detach()
 
 
 def broadcast_to(a, shape):
@@ -360,7 +362,9 @@ class LogSumExp(TensorOp):
         vx3 = reshape(vx3, g_shape)
         vx2 = broadcast_to(vx3, lhs.shape)
         vx1 = vx2 * exp(lhs - maxLhs)
-        return vx1
+        # return vx1
+        ## TODO: use .detach() for test_optim_adam_z_memory_check_1
+        return vx1.detach()
 
 
 def logsumexp(a, axes=None):

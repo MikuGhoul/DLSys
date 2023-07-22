@@ -1016,6 +1016,7 @@ def test_optim_adam_weight_decay_bias_correction_1():
 
 # We're checking that you have not allocated too many tensors;
 # if this fails, make sure you're using .detach()/.data whenever possible.
+## TODO: use .detach() at ops.py, perhaps there is a better solution.
 def test_optim_adam_z_memory_check_1():
     np.testing.assert_allclose(global_tensor_count(),
         np.array(1132), rtol=1e-5, atol=1000)
