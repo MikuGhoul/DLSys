@@ -88,9 +88,9 @@ class Linear(Module):
         self.out_features = out_features
 
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.kaiming_uniform(fan_in=in_features, fan_out=out_features))
+        self.weight = Parameter(init.kaiming_uniform(fan_in=in_features, fan_out=out_features, requires_grad=True))
         if bias:
-            self.bias = Parameter(init.kaiming_uniform(fan_in=out_features, fan_out=1).reshape((1, out_features)))
+            self.bias = Parameter(init.kaiming_uniform(fan_in=out_features, fan_out=1, requires_grad=True).reshape((1, out_features)))
         else:
             self.bias = None
         ### END YOUR SOLUTION
@@ -144,8 +144,8 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(dim))
-        self.bias = Parameter(init.zeros(dim))
+        self.weight = Parameter(init.ones(dim, requires_grad=True))
+        self.bias = Parameter(init.zeros(dim, requires_grad=True))
         self.running_mean = init.zeros(dim)
         self.running_var = init.ones(dim)
         ### END YOUR SOLUTION
@@ -182,8 +182,8 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(dim))
-        self.bias = Parameter(init.zeros(dim))
+        self.weight = Parameter(init.ones(dim, requires_grad=True))
+        self.bias = Parameter(init.zeros(dim, requires_grad=True))
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -208,8 +208,10 @@ class Dropout(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
         if self.training:
-            drop_mask = init.randb(*x.shape, p=self.p) / (1 - self.p)
-            return x * drop_mask
+            drop_mask = init.randb(*x.shape, p=1 - self.p) 
+            return x * drop_mask / (1 - self.p)
+        else:
+            return x
         ### END YOUR SOLUTION
 
 

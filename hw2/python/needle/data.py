@@ -115,8 +115,9 @@ class DataLoader:
 
     def __iter__(self):
         ### BEGIN YOUR SOLUTION
-        return self
+        self.index = 0
         ### END YOUR SOLUTION
+        return self
 
     def __next__(self):
         ### BEGIN YOUR SOLUTION
